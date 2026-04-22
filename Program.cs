@@ -7,10 +7,10 @@ class Program
 
     private const string InputFile = "youtube_links.txt"; // Файл с исходными ссылками
     private const string ErrorLogFile = "failed_links.txt"; // Файл для ошибок
-    private const int PauseBetweenDownloadsSeconds = 30; // Пауза в секундах между скачиваниями
+    private const int PauseBetweenDownloadsSeconds = 30;
 
     // Link: https://github.com/yt-dlp/yt-dlp
-    private const string YtDlpFile = @"C:\Downloads\yt-dlp\yt-dlp.exe"; 
+    private const string YtDlpFile = @"C:\Downloads\yt-dlp\yt-dlp.exe";
 
     // Link: https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp
     private const string CookieFile = @"C:\Downloads\yt-dlp\cookies.txt";
@@ -111,8 +111,7 @@ class Program
                 CreateNoWindow = false,
                 RedirectStandardError = true, 
                 RedirectStandardOutput = true,
-                StandardOutputEncoding = Encoding.UTF8,
-                StandardErrorEncoding = Encoding.UTF8
+                StandardOutputEncoding = Encoding.UTF8
             };
 
             using Process process = new() { StartInfo = startInfo };
