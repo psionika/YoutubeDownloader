@@ -7,7 +7,7 @@ class Program
 
     private const string InputFile = "youtube_links.txt"; // Файл с исходными ссылками
     private const string ErrorLogFile = "failed_links.txt"; // Файл для ошибок
-    private const int PauseBetweenDownloadsSeconds = 30;
+    private const int PauseBetweenDownloadsSeconds = 30; // Пауза между попытками скачивания в секундах
 
     // Link: https://github.com/yt-dlp/yt-dlp
     private const string YtDlpFile = @"C:\Downloads\yt-dlp\yt-dlp.exe";
