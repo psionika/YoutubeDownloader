@@ -25,6 +25,8 @@ class Program
 
     static void Main()
     {
+        CheckRequiredFiles();
+
         string[] videoLinks = ReadSourceFile();
 
         List<string> failedUrls = [];
@@ -70,21 +72,29 @@ class Program
         }
     }
 
+    private static void CheckRequiredFiles()
+    {
+        string[] requiredFiles = [InputFile, YtDlpFile, CookieFile, FfmpegFile, AriaFile];
+
+        foreach (var file in requiredFiles)
+        {
+            if (!File.Exists(file))
+            {
+                ConsoleWriter.PrintError($"Ошибка: Файл {file} не найден!");
+                Environment.Exit(1);
+            }
+        }
+    }
+
     private static string[] ReadSourceFile()
     {
-        // Проверяем наличие входного файла
-        if (!File.Exists(InputFile))
-        {
-            ConsoleWriter.PrintError($"Ошибка: Файл {InputFile} не найден!");
-            Environment.Exit(1);
-        }
+        string[] urls = [.. File.ReadAllLines(InputFile)
+            .Select(line => line.Trim())
+            .Where(line => line.StartsWith("http://") || line.StartsWith("https://"))];
 
-        string[] urls = [.. File.ReadAllLines(InputFile).Where(line => !string.IsNullOrWhiteSpace(line))];
-
-        // Проверяем количество строк в файле
-        if (urls.Length < 1)
+        if (urls.Length == 0)
         {
-            ConsoleWriter.PrintError($"Ошибка: Файл {InputFile} не должен быть пустым");
+            ConsoleWriter.PrintError($"Ошибка: В файле {InputFile} не найдено валидных ссылок (должны начинаться с http или https)");
             Environment.Exit(1);
         }
 
@@ -97,6 +107,7 @@ class Program
         {
             string[] args = [
                 $"--cookies \"{CookieFile}\" ",
+                $"--force-ipv4 ", // or "--force-ipv6 " for ipv6 connect
                 $"--ffmpeg-location \"{FfmpegFile}\" ",
                 $"--external-downloader \"{AriaFile}\" ",
                 $"--encoding utf-8 ",
