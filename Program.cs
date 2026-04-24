@@ -38,17 +38,17 @@ class Program
         {
             string link = videoLinks[i];
 
-            ConsoleWriter.PrintWarning($"[Обработка url] {link} ({i+1}/{videoLinks.Length})");
+            ConsoleWriter.Warning($"[Обработка url] {link} ({i+1}/{videoLinks.Length})");
 
             var success = ((Func<bool>)(() => DownloadVideo(link))).Time("Загрузка видео");
 
             if (success)
             {
-                ConsoleWriter.PrintSuccess("[Статус] Успешно");
+                ConsoleWriter.Success("[Статус] Успешно");
             }
             else
             {
-                ConsoleWriter.PrintError("[Статус] ОШИБКА");
+                ConsoleWriter.Error("[Статус] ОШИБКА");
                 failedUrls.Add(link);
             }
 
@@ -64,11 +64,11 @@ class Program
         if (failedUrls.Count != 0)
         {
             File.WriteAllLines(ErrorLogFile, failedUrls);
-            ConsoleWriter.PrintError($"[Ошибка] Завершено с ошибками. Список неудачных ссылок сохранен в: {ErrorLogFile}");
+            ConsoleWriter.Error($"[Ошибка] Завершено с ошибками. Список неудачных ссылок сохранен в: {ErrorLogFile}");
         }
         else
         {
-            ConsoleWriter.PrintSuccess("Все ссылки обработаны успешно!");
+            ConsoleWriter.Success("Все ссылки обработаны успешно!");
         }
     }
 
@@ -80,7 +80,7 @@ class Program
         {
             if (!File.Exists(file))
             {
-                ConsoleWriter.PrintError($"[Ошибка] Файл {file} не найден!");
+                ConsoleWriter.Error($"[Ошибка] Файл {file} не найден!");
                 Environment.Exit(1);
             }
         }
@@ -94,7 +94,7 @@ class Program
 
         if (urls.Length == 0)
         {
-            ConsoleWriter.PrintError($"[Ошибка] В файле {InputFile} не найдено валидных ссылок (должны начинаться с http или https)");
+            ConsoleWriter.Error($"[Ошибка] В файле {InputFile} не найдено валидных ссылок (должны начинаться с http или https)");
             Environment.Exit(1);
         }
 
@@ -127,8 +127,8 @@ class Program
 
             using Process process = new() { StartInfo = startInfo };
 
-            ConsoleWriter.PrintInfo($"[Запускаем] {process.StartInfo.FileName}");
-            foreach (var arg in args) ConsoleWriter.PrintInfo($"\t\t{arg}");
+            ConsoleWriter.Info($"[Запускаем] {process.StartInfo.FileName}");
+            foreach (var arg in args) ConsoleWriter.Info($"\t\t{arg}");
             
             process.Start();
 
@@ -150,7 +150,7 @@ class Program
         }
         catch (Exception ex)
         {
-            ConsoleWriter.PrintError($"[Ошибка] Исключение при запусе процесса: {ex.Message}");
+            ConsoleWriter.Error($"[Ошибка] Исключение при запусе процесса: {ex.Message}");
             return false;
         }
     }
@@ -158,21 +158,17 @@ class Program
 
 public static class ConsoleWriter
 {
-    public static void PrintError(string message) => WriteLine(message, ConsoleColor.Red);
-    public static void PrintSuccess(string message) => WriteLine(message, ConsoleColor.Green);
-    public static void PrintWarning(string message) => WriteLine(message, ConsoleColor.Yellow);
-    public static void PrintInfo(string message) => WriteLine(message, ConsoleColor.DarkMagenta);
-    public static void Print(string message) => WriteLine(message, ConsoleColor.White);
+    public static void Error(string msg) => Write(msg, ConsoleColor.Red);
+    public static void Success(string msg) => Write(msg, ConsoleColor.Green);
+    public static void Warning(string msg) => Write(msg, ConsoleColor.Yellow);
+    public static void Info(string msg) => Write(msg, ConsoleColor.DarkMagenta);
+    public static void Print(string msg) => Write(msg, ConsoleColor.White);
 
-    private static void WriteLine(string message, ConsoleColor? color)
+    static void Write(string msg, ConsoleColor color)
     {
-        if (color.HasValue)
-            Console.ForegroundColor = color.Value;
-
-        Console.WriteLine(message);
-
-        if (color.HasValue)
-            Console.ResetColor();
+        Console.ForegroundColor = color;
+        Console.WriteLine(msg);
+        Console.ResetColor();
     }
 }
 
@@ -199,7 +195,7 @@ public static class TimingExtensions
         var result = action();
         sw.Stop();
 
-        ConsoleWriter.PrintWarning($"[{label}] Выполнено за {Format(sw.Elapsed)}");
+        ConsoleWriter.Warning($"[{label}] Выполнено за {Format(sw.Elapsed)}");
         return result;
     }
 }
