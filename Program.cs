@@ -31,30 +31,30 @@ class Program
 
         List<string> failedUrls = [];
 
-        Console.WriteLine($"Найдено ссылок для обработки: {videoLinks.Length}");
+        Console.WriteLine($"[Найдено ссылок для обработки] {videoLinks.Length}");
         Console.WriteLine("-------------------------------------------");
 
         for (int i = 0; i < videoLinks.Length; i++)
         {
             string link = videoLinks[i];
 
-            ConsoleWriter.PrintWarning($"Обработка url: {link} ({i+1}/{videoLinks.Length})");
+            ConsoleWriter.PrintWarning($"[Обработка url] {link} ({i+1}/{videoLinks.Length})");
 
-            bool success = DownloadVideo(link);
+            var success = ((Func<bool>)(() => DownloadVideo(link))).Time("Загрузка видео");
 
             if (success)
             {
-                ConsoleWriter.PrintSuccess("Статус: Успешно");
+                ConsoleWriter.PrintSuccess("[Статус] Успешно");
             }
             else
             {
-                ConsoleWriter.PrintError("Статус: ОШИБКА");
+                ConsoleWriter.PrintError("[Статус] ОШИБКА");
                 failedUrls.Add(link);
             }
 
             if (i+1 != videoLinks.Length)
             {
-                Console.WriteLine($"Статус: Пауза {PauseBetweenDownloadsSeconds} секунд"); 
+                Console.WriteLine($"[Статус] Пауза {PauseBetweenDownloadsSeconds} секунд"); 
                 Thread.Sleep(PauseBetweenDownloadsSeconds * 1000);
             }
             
@@ -64,7 +64,7 @@ class Program
         if (failedUrls.Count != 0)
         {
             File.WriteAllLines(ErrorLogFile, failedUrls);
-            ConsoleWriter.PrintError($"Завершено с ошибками. Список неудачных ссылок сохранен в: {ErrorLogFile}");
+            ConsoleWriter.PrintError($"[Ошибка] Завершено с ошибками. Список неудачных ссылок сохранен в: {ErrorLogFile}");
         }
         else
         {
@@ -80,7 +80,7 @@ class Program
         {
             if (!File.Exists(file))
             {
-                ConsoleWriter.PrintError($"Ошибка: Файл {file} не найден!");
+                ConsoleWriter.PrintError($"[Ошибка] Файл {file} не найден!");
                 Environment.Exit(1);
             }
         }
@@ -94,7 +94,7 @@ class Program
 
         if (urls.Length == 0)
         {
-            ConsoleWriter.PrintError($"Ошибка: В файле {InputFile} не найдено валидных ссылок (должны начинаться с http или https)");
+            ConsoleWriter.PrintError($"[Ошибка] В файле {InputFile} не найдено валидных ссылок (должны начинаться с http или https)");
             Environment.Exit(1);
         }
 
@@ -127,7 +127,7 @@ class Program
 
             using Process process = new() { StartInfo = startInfo };
 
-            ConsoleWriter.PrintInfo($"Запускаем: {process.StartInfo.FileName}");
+            ConsoleWriter.PrintInfo($"[Запускаем] {process.StartInfo.FileName}");
             foreach (var arg in args) ConsoleWriter.PrintInfo($"\t\t{arg}");
             
             process.Start();
@@ -150,28 +150,56 @@ class Program
         }
         catch (Exception ex)
         {
-            ConsoleWriter.PrintError($"Исключение при запусе процесса: {ex.Message}");
+            ConsoleWriter.PrintError($"[Ошибка] Исключение при запусе процесса: {ex.Message}");
             return false;
         }
     }
+}
 
-    private static class ConsoleWriter
+public static class ConsoleWriter
+{
+    public static void PrintError(string message) => WriteLine(message, ConsoleColor.Red);
+    public static void PrintSuccess(string message) => WriteLine(message, ConsoleColor.Green);
+    public static void PrintWarning(string message) => WriteLine(message, ConsoleColor.Yellow);
+    public static void PrintInfo(string message) => WriteLine(message, ConsoleColor.DarkMagenta);
+    public static void Print(string message) => WriteLine(message, ConsoleColor.White);
+
+    private static void WriteLine(string message, ConsoleColor? color)
     {
-        public static void PrintError(string message) => WriteLine(message, ConsoleColor.Red);
-        public static void PrintSuccess(string message) => WriteLine(message, ConsoleColor.Green);
-        public static void PrintWarning(string message) => WriteLine(message, ConsoleColor.Yellow);
-        public static void PrintInfo(string message) => WriteLine(message, ConsoleColor.DarkMagenta);
-        public static void Print(string message) => WriteLine(message, ConsoleColor.White);
+        if (color.HasValue)
+            Console.ForegroundColor = color.Value;
 
-        private static void WriteLine(string message, ConsoleColor? color)
-        {
-            if (color.HasValue)
-                Console.ForegroundColor = color.Value;
+        Console.WriteLine(message);
 
-            Console.WriteLine(message);
+        if (color.HasValue)
+            Console.ResetColor();
+    }
+}
 
-            if (color.HasValue)
-                Console.ResetColor();
-        }
+public static class TimingExtensions
+{
+    static string Format(TimeSpan elapsed)
+    {
+        var parts = new List<string>();
+
+        if (elapsed.Hours > 0)
+            parts.Add($"{elapsed.Hours:D2} ч.");
+
+        if (elapsed.Minutes > 0 || parts.Count > 0)
+            parts.Add($"{elapsed.Minutes:D2} мин.");
+
+        parts.Add($"{elapsed.Seconds:D2} сек.");
+
+        return string.Join(" ", parts);
+    }
+
+    public static T Time<T>(this Func<T> action, string label = "")
+    {
+        var sw = Stopwatch.StartNew();
+        var result = action();
+        sw.Stop();
+
+        ConsoleWriter.PrintWarning($"[{label}] Выполнено за {Format(sw.Elapsed)}");
+        return result;
     }
 }
