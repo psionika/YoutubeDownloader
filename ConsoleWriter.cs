@@ -10,9 +10,15 @@
 
         static void Write(string msg, ConsoleColor color)
         {
-            Console.ForegroundColor = color;
-            Console.WriteLine(msg);
-            Console.ResetColor();
+            try
+            {
+                Console.ForegroundColor = color;
+                Console.WriteLine(msg);
+            }
+            finally
+            {
+                Console.ResetColor();
+            }
         }
     }
 }

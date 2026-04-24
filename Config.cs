@@ -1,12 +1,10 @@
-using System.Text;
-
 namespace YoutubeDownloader;
 
 public class Config
 {
     public string InputFile { get; set; } = string.Empty;
     public string ErrorLogFile { get; set; } = string.Empty;
-    public int PauseSeconds { get; set; }
+    public int PauseSeconds { get; set; } = 30;
 
     public string YtDlpPath { get; set; } = string.Empty;
     public string CookiePath { get; set; } = string.Empty;
@@ -40,12 +38,33 @@ public class Config
             {
                 case "inputFile": config.InputFile = value; break;
                 case "errorLogFile": config.ErrorLogFile = value; break;
-                case "pauseSeconds": config.PauseSeconds = int.Parse(value); break;
+                case "pauseSeconds":
+                    if (int.TryParse(value, out int seconds))
+                        config.PauseSeconds = seconds;
+                    else
+                        ConsoleWriter.Warning($"[Предупреждение] Неверное значение '{key}': '{value}'. Установлено значение по умолчанию: 30 секунд");
+                    break;
                 case "ytDlpPath": config.YtDlpPath = value; break;
                 case "cookiePath": config.CookiePath = value; break;
                 case "ffmpegPath": config.FfmpegPath = value; break;
                 case "ariaPath": config.AriaPath = value; break;
             }
+        }
+
+        // Валидация обязательных полей
+        var errors = new List<string>();
+        if (string.IsNullOrEmpty(config.InputFile)) errors.Add("inputFile");
+        if (string.IsNullOrEmpty(config.ErrorLogFile)) errors.Add("errorLogFile");
+        if (string.IsNullOrEmpty(config.YtDlpPath)) errors.Add("ytDlpPath");
+        if (string.IsNullOrEmpty(config.CookiePath)) errors.Add("cookiePath");
+        if (string.IsNullOrEmpty(config.FfmpegPath)) errors.Add("ffmpegPath");
+        if (string.IsNullOrEmpty(config.AriaPath)) errors.Add("ariaPath");
+
+        if (errors.Count > 0)
+        {
+            foreach (var missing in errors)
+                ConsoleWriter.Error($"[Ошибка] Значение '{missing}' не найдено в config.txt");
+            Environment.Exit(1);
         }
 
         return config;
