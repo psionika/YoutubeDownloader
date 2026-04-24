@@ -8,6 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Update="config.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="youtube_links.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

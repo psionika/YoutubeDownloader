@@ -1,0 +1,10 @@
+# YoutubeDownloader Configuration
+
+inputFile = youtube_links.txt
+errorLogFile = failed_links.txt
+pauseSeconds = 30
+
+ytDlpPath = C:\YoutubeDownloader\yt-dlp\yt-dlp.exe
+cookiePath = C:\YoutubeDownloader\yt-dlp\cookies.txt
+ffmpegPath = C:\YoutubeDownloader\yt-dlp\ffmpeg\bin\ffmpeg.exe
+ariaPath = C:\YoutubeDownloader\yt-dlp\aria2c.exe
