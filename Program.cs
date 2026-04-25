@@ -11,10 +11,25 @@ class Program
     {
         string[] videoLinks = ReadSourceFile();
 
-        List<string> failedUrls = [];
-
         Console.WriteLine($"[Найдено ссылок для обработки] {videoLinks.Length}");
         Console.WriteLine("-------------------------------------------");
+
+        List<string> failedUrls = ((Func<List<string>>)(() => DownloadAll(videoLinks))).Time("Общее время");
+
+        if (failedUrls.Count != 0)
+        {
+            File.WriteAllLines(_config.ErrorLogFile, failedUrls);
+            ConsoleWriter.Error($"[Ошибка] Завершено с ошибками ({failedUrls.Count}/{videoLinks.Length}). Список неудачных ссылок сохранен в: {_config.ErrorLogFile}");
+        }
+        else
+        {
+            ConsoleWriter.Success("Все ссылки обработаны успешно!");
+        }
+    }
+
+    private static List<string> DownloadAll(string[] videoLinks)
+    {
+        List<string> failedUrls = [];
 
         for (int i = 0; i < videoLinks.Length; i++)
         {
@@ -36,22 +51,14 @@ class Program
 
             if (i + 1 != videoLinks.Length)
             {
-                Console.WriteLine($"[Статус] Пауза {_config.PauseSeconds} секунд");
+                Console.WriteLine($"[Статус] Пауза {_config.PauseSeconds} секунд ({i + 1}/{videoLinks.Length})");
                 Thread.Sleep(_config.PauseSeconds * 1000);
             }
 
             Console.WriteLine("-------------------------------------------");
         }
 
-        if (failedUrls.Count != 0)
-        {
-            File.WriteAllLines(_config.ErrorLogFile, failedUrls);
-            ConsoleWriter.Error($"[Ошибка] Завершено с ошибками. Список неудачных ссылок сохранен в: {_config.ErrorLogFile}");
-        }
-        else
-        {
-            ConsoleWriter.Success("Все ссылки обработаны успешно!");
-        }
+        return failedUrls;
     }
 
     private static string[] ReadSourceFile()
