@@ -1,27 +1,73 @@
+using System.Reflection;
+
 namespace YoutubeDownloader;
 
 public class Config
 {
+    [FileRequired]
     public string InputFile { get; set; } = string.Empty;
+
     public string ErrorLogFile { get; set; } = string.Empty;
+
     public int PauseSeconds { get; set; } = 30;
 
+    [FileRequired]
     public string YtDlpPath { get; set; } = string.Empty;
+
+    [FileRequired]
     public string CookiePath { get; set; } = string.Empty;
+
+    [FileRequired]
     public string FfmpegPath { get; set; } = string.Empty;
+
+    [FileRequired]
     public string AriaPath { get; set; } = string.Empty;
 
-    public static Config Load(string path = "config.txt")
+    static void ValidateConfig(Config config)
     {
-        if (!File.Exists(path))
+        var fileProps = typeof(Config)
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(p => p.GetCustomAttribute<FileRequiredAttribute>() is not null);
+
+        // 1) Проверяем, что обязательные поля заполнены
+        var missing = fileProps
+            .Where(p => string.IsNullOrEmpty((string)p.GetValue(config)!))
+            .Select(p => p.Name)
+            .ToList();
+
+        if (missing.Count > 0)
         {
-            ConsoleWriter.Error($"[Ошибка] Файл конфигурации '{path}' не найден!");
+            foreach (var key in missing)
+                ConsoleWriter.Error($"[Ошибка] Значение '{key}' не найдено в config.txt");
+            Environment.Exit(1);
+        }
+
+        // 2) Проверяем существование файлов
+        var missingFiles = fileProps
+            .Where(p => !File.Exists((string)p.GetValue(config)!))
+            .Select(p => $"{p.Name}: {(string)p.GetValue(config)!}")
+            .ToList();
+
+        if (missingFiles.Count > 0)
+        {
+            foreach (var file in missingFiles)
+                ConsoleWriter.Error($"[Ошибка] Файл не найден: {file}");
+            Environment.Exit(1);
+        }
+    }
+
+    public static Config Load(string configPath = "config.txt")
+    {
+        if (!File.Exists(configPath))
+        {
+            ConsoleWriter.Error($"[Ошибка] Файл конфигурации '{configPath}' не найден!");
             Environment.Exit(1);
         }
 
         var config = new Config();
+        var props = typeof(Config).GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
-        foreach (var line in File.ReadLines(path))
+        foreach (var line in File.ReadLines(configPath))
         {
             var trimmed = line.Trim();
             if (string.IsNullOrEmpty(trimmed) || trimmed.StartsWith('#'))
@@ -34,38 +80,24 @@ public class Config
             var key = parts[0].Trim();
             var value = parts[1].Trim();
 
-            switch (key)
+            var prop = props.FirstOrDefault(p => p.Name.Equals(key, StringComparison.OrdinalIgnoreCase));
+            if (prop == null)
             {
-                case "inputFile": config.InputFile = value; break;
-                case "errorLogFile": config.ErrorLogFile = value; break;
-                case "pauseSeconds":
-                    if (int.TryParse(value, out int seconds))
-                        config.PauseSeconds = seconds;
-                    else
-                        ConsoleWriter.Warning($"[Предупреждение] Неверное значение '{key}': '{value}'. Установлено значение по умолчанию: 30 секунд");
-                    break;
-                case "ytDlpPath": config.YtDlpPath = value; break;
-                case "cookiePath": config.CookiePath = value; break;
-                case "ffmpegPath": config.FfmpegPath = value; break;
-                case "ariaPath": config.AriaPath = value; break;
+                ConsoleWriter.Warning($"[Предупреждение] Неизвестный ключ '{key}' в config.txt");
+                continue;
+            }
+
+            try
+            {
+                prop.SetValue(config, Convert.ChangeType(value, prop.PropertyType));
+            }
+            catch (Exception ex)
+            {
+                ConsoleWriter.Warning($"[Предупреждение] Неверное значение для '{key}': {ex.Message}");
             }
         }
 
-        // Валидация обязательных полей
-        var errors = new List<string>();
-        if (string.IsNullOrEmpty(config.InputFile)) errors.Add("inputFile");
-        if (string.IsNullOrEmpty(config.ErrorLogFile)) errors.Add("errorLogFile");
-        if (string.IsNullOrEmpty(config.YtDlpPath)) errors.Add("ytDlpPath");
-        if (string.IsNullOrEmpty(config.CookiePath)) errors.Add("cookiePath");
-        if (string.IsNullOrEmpty(config.FfmpegPath)) errors.Add("ffmpegPath");
-        if (string.IsNullOrEmpty(config.AriaPath)) errors.Add("ariaPath");
-
-        if (errors.Count > 0)
-        {
-            foreach (var missing in errors)
-                ConsoleWriter.Error($"[Ошибка] Значение '{missing}' не найдено в config.txt");
-            Environment.Exit(1);
-        }
+        ValidateConfig(config);
 
         return config;
     }
