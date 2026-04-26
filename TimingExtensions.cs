@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 
 namespace YoutubeDownloader;
 
@@ -25,7 +25,7 @@ public static class TimingExtensions
         var result = action();
         sw.Stop();
 
-        ConsoleWriter.Warning($"[{label}] Выполнено за {Format(sw.Elapsed)}");
+        ConsoleWriter.Important($"[{label}] Выполнено за {Format(sw.Elapsed)}");
         return result;
     }
 
@@ -35,7 +35,7 @@ public static class TimingExtensions
         var result = await action();
         sw.Stop();
 
-        ConsoleWriter.Warning($"[{label}] Выполнено за {Format(sw.Elapsed)}");
+        ConsoleWriter.Important($"[{label}] Выполнено за {Format(sw.Elapsed)}");
         return result;
     }
 }

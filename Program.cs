@@ -40,7 +40,11 @@ class Program
         }
         catch (OperationCanceledException)
         {
-            ConsoleWriter.Error("\n[Ошибка] Процесс был прерван пользователем (Ctrl+C).");
+            ConsoleWriter.Error("[Ошибка] Процесс был прерван пользователем (Ctrl+C).");
+        }
+        catch (Exception ex)
+        {
+            ConsoleWriter.Error("[Ошибка] Возникло исключения " + ex.Message);
         }
     }
 
@@ -52,7 +56,7 @@ class Program
         {
             string link = videoLinks[i];
 
-            ConsoleWriter.Warning($"[Обработка url] {link} ({i + 1}/{videoLinks.Length})");
+            ConsoleWriter.Important($"[Обработка url] {link} ({i + 1}/{videoLinks.Length})");
 
             var success = await ((Func<Task<bool>>)(() => DownloadVideo(link, ct))).TimeAsync("Загрузка видео");
 
@@ -82,7 +86,8 @@ class Program
     {
         string[] urls = [.. File.ReadAllLines(_config.InputFile)
         .Select(line => line.Trim())
-        .Where(line => line.StartsWith("http://") || line.StartsWith("https://"))];
+        .Where(line => line.StartsWith("http://") || line.StartsWith("https://"))
+        .Distinct(StringComparer.OrdinalIgnoreCase)];
 
         if (urls.Length == 0)
         {
