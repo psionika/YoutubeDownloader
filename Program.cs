@@ -6,28 +6,45 @@ namespace YoutubeDownloader;
 class Program
 {
     private readonly static Config _config = Config.Load();
+    private static CancellationTokenSource? _cts;
 
-    static void Main()
+    static async Task Main()
     {
+        _cts = new CancellationTokenSource();
+
+        Console.CancelKeyPress += (_, e) =>
+        {
+            e.Cancel = true;
+            ConsoleWriter.Warning("\n[Ctrl+C] Прерывание... Остановка после завершения текущей операции.");
+            _cts?.Cancel();
+        };
+
         string[] videoLinks = ReadSourceFile();
 
         Console.WriteLine($"[Найдено ссылок для обработки] {videoLinks.Length}");
         Console.WriteLine("-------------------------------------------");
 
-        List<string> failedUrls = ((Func<List<string>>)(() => DownloadAll(videoLinks))).Time("Общее время");
+        try
+        {
+            List<string> failedUrls = await ((Func<Task<List<string>>>)(() => DownloadAll(videoLinks, _cts.Token))).TimeAsync("Общее время");
 
-        if (failedUrls.Count != 0)
-        {
-            File.WriteAllLines(_config.ErrorLogFile, failedUrls);
-            ConsoleWriter.Error($"[Ошибка] Завершено с ошибками ({failedUrls.Count}/{videoLinks.Length}). Список неудачных ссылок сохранен в: {_config.ErrorLogFile}");
+            if (failedUrls.Count != 0)
+            {
+                File.WriteAllLines(_config.ErrorLogFile, failedUrls);
+                ConsoleWriter.Error($"[Ошибка] Завершено с ошибками ({failedUrls.Count}/{videoLinks.Length}). Список неудачных ссылок сохранен в: {_config.ErrorLogFile}");
+            }
+            else
+            {
+                ConsoleWriter.Success("Все ссылки обработаны успешно!");
+            }
         }
-        else
+        catch (OperationCanceledException)
         {
-            ConsoleWriter.Success("Все ссылки обработаны успешно!");
+            ConsoleWriter.Error("\n[Ошибка] Процесс был прерван пользователем (Ctrl+C).");
         }
     }
 
-    private static List<string> DownloadAll(string[] videoLinks)
+    private static async Task<List<string>> DownloadAll(string[] videoLinks, CancellationToken ct)
     {
         List<string> failedUrls = [];
 
@@ -37,7 +54,7 @@ class Program
 
             ConsoleWriter.Warning($"[Обработка url] {link} ({i + 1}/{videoLinks.Length})");
 
-            var success = ((Func<bool>)(() => DownloadVideo(link))).Time("Загрузка видео");
+            var success = await ((Func<Task<bool>>)(() => DownloadVideo(link, ct))).TimeAsync("Загрузка видео");
 
             if (success)
             {
@@ -52,7 +69,7 @@ class Program
             if (i + 1 != videoLinks.Length)
             {
                 Console.WriteLine($"[Статус] Пауза {_config.PauseSeconds} секунд ({i + 1}/{videoLinks.Length})");
-                Thread.Sleep(_config.PauseSeconds * 1000);
+                await Task.Delay(_config.PauseSeconds * 1000, ct);
             }
 
             Console.WriteLine("-------------------------------------------");
@@ -76,7 +93,7 @@ class Program
         return urls;
     }
 
-    private static bool DownloadVideo(string url)
+    private static async Task<bool> DownloadVideo(string url, CancellationToken ct)
     {
         try
         {
@@ -104,17 +121,21 @@ class Program
             ConsoleWriter.Info($"[Запускаем] {process.StartInfo.FileName}");
             foreach (var arg in args) ConsoleWriter.Info($"\t\t{arg}");
 
-            process.Start();
-
             process.OutputDataReceived += (_, e) => { if (!string.IsNullOrWhiteSpace(e.Data)) ConsoleWriter.Print(e.Data); };
             process.ErrorDataReceived += (_, e) =>  { if (!string.IsNullOrWhiteSpace(e.Data)) ConsoleWriter.Error(e.Data); };
+
+            process.Start();
 
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
 
-            process.WaitForExit();
+            await process.WaitForExitAsync(ct);
 
             return process.ExitCode == 0;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
         }
         catch (Exception ex)
         {

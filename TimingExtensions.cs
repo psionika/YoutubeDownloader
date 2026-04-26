@@ -28,4 +28,14 @@ public static class TimingExtensions
         ConsoleWriter.Warning($"[{label}] Выполнено за {Format(sw.Elapsed)}");
         return result;
     }
+
+    public static async Task<T> TimeAsync<T>(this Func<Task<T>> action, string label = "")
+    {
+        var sw = Stopwatch.StartNew();
+        var result = await action();
+        sw.Stop();
+
+        ConsoleWriter.Warning($"[{label}] Выполнено за {Format(sw.Elapsed)}");
+        return result;
+    }
 }
