@@ -9,12 +9,12 @@ public static class TimingExtensions
         var parts = new List<string>();
 
         if (elapsed.Hours > 0)
-            parts.Add($"{elapsed.Hours:D2} ч.");
+            parts.Add($"{elapsed.Hours:D2}h");
 
         if (elapsed.Minutes > 0 || parts.Count > 0)
-            parts.Add($"{elapsed.Minutes:D2} мин.");
+            parts.Add($"{elapsed.Minutes:D2}m");
 
-        parts.Add($"{elapsed.Seconds:D2} сек.");
+        parts.Add($"{elapsed.Seconds:D2}s");
 
         return string.Join(" ", parts);
     }
@@ -25,7 +25,7 @@ public static class TimingExtensions
         var result = action();
         sw.Stop();
 
-        ConsoleWriter.Important($"[{label}] Выполнено за {Format(sw.Elapsed)}");
+        ConsoleWriter.Important($"[{label}] Completed in {Format(sw.Elapsed)}");
         return result;
     }
 
@@ -35,7 +35,7 @@ public static class TimingExtensions
         var result = await action();
         sw.Stop();
 
-        ConsoleWriter.Important($"[{label}] Выполнено за {Format(sw.Elapsed)}");
+        ConsoleWriter.Important($"[{label}] Completed in {Format(sw.Elapsed)}");
         return result;
     }
 }

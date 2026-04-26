@@ -29,7 +29,7 @@ public class Config
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Where(p => p.GetCustomAttribute<FileRequiredAttribute>() is not null);
 
-        // 1) Проверяем, что обязательные поля заполнены
+        // 1) Check that required fields are set
         var missing = fileProps
             .Where(p => string.IsNullOrEmpty((string)p.GetValue(config)!))
             .Select(p => p.Name)
@@ -38,11 +38,11 @@ public class Config
         if (missing.Count > 0)
         {
             foreach (var key in missing)
-                ConsoleWriter.Error($"[Ошибка] Значение '{key}' не найдено в config.txt");
+                ConsoleWriter.Error($"[Error] Value for '{key}' not found in config.txt");
             Environment.Exit(1);
         }
 
-        // 2) Проверяем существование файлов
+        // 2) Check that files exist
         var missingFiles = fileProps
             .Where(p => !File.Exists((string)p.GetValue(config)!))
             .Select(p => $"{p.Name}: {(string)p.GetValue(config)!}")
@@ -51,7 +51,7 @@ public class Config
         if (missingFiles.Count > 0)
         {
             foreach (var file in missingFiles)
-                ConsoleWriter.Error($"[Ошибка] Файл не найден: {file}");
+                ConsoleWriter.Error($"[Error] File not found: {file}");
             Environment.Exit(1);
         }
     }
@@ -60,7 +60,7 @@ public class Config
     {
         if (!File.Exists(configPath))
         {
-            ConsoleWriter.Error($"[Ошибка] Файл конфигурации '{configPath}' не найден!");
+            ConsoleWriter.Error($"[Error] Config file '{configPath}' not found!");
             Environment.Exit(1);
         }
 
@@ -83,7 +83,7 @@ public class Config
             var prop = props.FirstOrDefault(p => p.Name.Equals(key, StringComparison.OrdinalIgnoreCase));
             if (prop == null)
             {
-                ConsoleWriter.Warning($"[Предупреждение] Неизвестный ключ '{key}' в config.txt");
+                ConsoleWriter.Warning($"[Warning] Unknown key '{key}' in config.txt");
                 continue;
             }
 
@@ -93,7 +93,7 @@ public class Config
             }
             catch (Exception ex)
             {
-                ConsoleWriter.Warning($"[Предупреждение] Неверное значение для '{key}': {ex.Message}");
+                ConsoleWriter.Warning($"[Warning] Invalid value for '{key}': {ex.Message}");
             }
         }
 

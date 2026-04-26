@@ -1,8 +1,8 @@
 namespace YoutubeDownloader;
 
 /// <summary>
-/// Помечает свойство как обязательный путь к файлу.
-/// При загрузке конфига проверяется, что поле заполнено и файл существует.
+/// Marks a property as a required file path.
+/// On config load it checks that the field is set and the file exists.
 /// </summary>
 [AttributeUsage(AttributeTargets.Property)]
 public class FileRequiredAttribute : Attribute { }

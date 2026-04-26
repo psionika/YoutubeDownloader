@@ -15,36 +15,36 @@ class Program
         Console.CancelKeyPress += (_, e) =>
         {
             e.Cancel = true;
-            ConsoleWriter.Warning("\n[Ctrl+C] Прерывание... Остановка после завершения текущей операции.");
+            ConsoleWriter.Warning("\n[Ctrl+C] Interrupting... Stopping after current operation completes.");
             _cts?.Cancel();
         };
 
         string[] videoLinks = ReadSourceFile();
 
-        Console.WriteLine($"[Найдено ссылок для обработки] {videoLinks.Length}");
+        Console.WriteLine($"[Found links to process] {videoLinks.Length}");
         Console.WriteLine("-------------------------------------------");
 
         try
         {
-            List<string> failedUrls = await ((Func<Task<List<string>>>)(() => DownloadAll(videoLinks, _cts.Token))).TimeAsync("Общее время");
+            List<string> failedUrls = await ((Func<Task<List<string>>>)(() => DownloadAll(videoLinks, _cts.Token))).TimeAsync("Total time");
 
             if (failedUrls.Count != 0)
             {
                 File.WriteAllLines(_config.ErrorLogFile, failedUrls);
-                ConsoleWriter.Error($"[Ошибка] Завершено с ошибками ({failedUrls.Count}/{videoLinks.Length}). Список неудачных ссылок сохранен в: {_config.ErrorLogFile}");
+                ConsoleWriter.Error($"[Error] Completed with errors ({failedUrls.Count}/{videoLinks.Length}). List of failed links saved to: {_config.ErrorLogFile}");
             }
             else
             {
-                ConsoleWriter.Success("Все ссылки обработаны успешно!");
+                ConsoleWriter.Success("All links processed successfully!");
             }
         }
         catch (OperationCanceledException)
         {
-            ConsoleWriter.Error("[Ошибка] Процесс был прерван пользователем (Ctrl+C).");
+            ConsoleWriter.Error("[Error] Process was interrupted by user (Ctrl+C).");
         }
         catch (Exception ex)
         {
-            ConsoleWriter.Error("[Ошибка] Возникло исключения " + ex.Message);
+            ConsoleWriter.Error("[Error] An exception occurred: " + ex.Message);
         }
     }
 
@@ -56,23 +56,23 @@ class Program
         {
             string link = videoLinks[i];
 
-            ConsoleWriter.Important($"[Обработка url] {link} ({i + 1}/{videoLinks.Length})");
+            ConsoleWriter.Important($"[Processing URL] {link} ({i + 1}/{videoLinks.Length})");
 
-            var success = await ((Func<Task<bool>>)(() => DownloadVideo(link, ct))).TimeAsync("Загрузка видео");
+            var success = await ((Func<Task<bool>>)(() => DownloadVideo(link, ct))).TimeAsync("Video download");
 
             if (success)
             {
-                ConsoleWriter.Success("[Статус] Успешно");
+                ConsoleWriter.Success("[Status] Success");
             }
             else
             {
-                ConsoleWriter.Error("[Статус] ОШИБКА");
+                ConsoleWriter.Error("[Status] ERROR");
                 failedUrls.Add(link);
             }
 
             if (i + 1 != videoLinks.Length)
             {
-                Console.WriteLine($"[Статус] Пауза {_config.PauseSeconds} секунд ({i + 1}/{videoLinks.Length})");
+                Console.WriteLine($"[Status] Pausing for {_config.PauseSeconds} seconds ({i + 1}/{videoLinks.Length})");
                 await Task.Delay(_config.PauseSeconds * 1000, ct);
             }
 
@@ -91,7 +91,7 @@ class Program
 
         if (urls.Length == 0)
         {
-            ConsoleWriter.Error($"[Ошибка] В файле {_config.InputFile} не найдено валидных ссылок (должны начинаться с http или https)");
+            ConsoleWriter.Error($"[Error] No valid links found in {_config.InputFile} (links must start with http or https)");
             Environment.Exit(1);
         }
 
@@ -104,7 +104,7 @@ class Program
         {
             string[] args = [
                 $"--cookies \"{_config.CookiePath}\"",
-                $"--force-ipv4", // or "--force-ipv6 " for ipv6 connect
+                $"--force-ipv4",
                 $"--ffmpeg-location \"{_config.FfmpegPath}\"",
                 $"--external-downloader \"{_config.AriaPath}\"",
                 $"--encoding utf-8",
@@ -123,7 +123,7 @@ class Program
 
             using Process process = new() { StartInfo = startInfo };
 
-            ConsoleWriter.Info($"[Запускаем] {process.StartInfo.FileName}");
+            ConsoleWriter.Info($"[Launching] {process.StartInfo.FileName}");
             foreach (var arg in args) ConsoleWriter.Info($"\t\t{arg}");
 
             process.OutputDataReceived += (_, e) => { if (!string.IsNullOrWhiteSpace(e.Data)) ConsoleWriter.Print(e.Data); };
@@ -144,7 +144,7 @@ class Program
         }
         catch (Exception ex)
         {
-            ConsoleWriter.Error($"[Ошибка] Исключение при запусе процесса: {ex.Message}");
+            ConsoleWriter.Error($"[Error] Exception while launching process: {ex.Message}");
             return false;
         }
     }
