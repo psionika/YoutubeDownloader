@@ -30,7 +30,7 @@ class Program
 
             if (failedUrls.Count != 0)
             {
-                File.WriteAllLines(_config.ErrorLogFile, failedUrls);
+                File.AppendAllLines(_config.ErrorLogFile, failedUrls);
                 ConsoleWriter.Error($"[Error] Completed with errors ({failedUrls.Count}/{videoLinks.Length}). List of failed links saved to: {_config.ErrorLogFile}");
             }
             else
