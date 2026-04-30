@@ -84,6 +84,12 @@ class Program
 
     private static string[] ReadSourceFile()
     {
+        if (!File.Exists(_config.InputFile))
+        {
+            ConsoleWriter.Error($"[Error] Source file '{_config.InputFile}' not found!");
+            Environment.Exit(1);
+        }
+
         string[] urls = [.. File.ReadAllLines(_config.InputFile)
         .Select(line => line.Trim())
         .Where(line => line.StartsWith("http://") || line.StartsWith("https://"))
