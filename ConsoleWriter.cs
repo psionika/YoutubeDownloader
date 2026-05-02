@@ -9,15 +9,14 @@ public static class ConsoleWriter
     public static void Info(string msg) => Write(msg, ConsoleColor.Magenta);
     public static void Print(string msg) => Write(msg, ConsoleColor.White);
 
+    private static readonly object _colorLock = new();
+
     static void Write(string msg, ConsoleColor color)
     {
-        try
+        lock (_colorLock)
         {
             Console.ForegroundColor = color;
             Console.WriteLine(msg);
-        }
-        finally
-        {
             Console.ResetColor();
         }
     }

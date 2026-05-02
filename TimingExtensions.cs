@@ -29,10 +29,10 @@ public static class TimingExtensions
         return result;
     }
 
-    public static async Task<T> TimeAsync<T>(this Func<Task<T>> action, string label = "")
+    public static async Task<T> TimeAsync<T>(Task<T> task, string label)
     {
         var sw = Stopwatch.StartNew();
-        var result = await action();
+        var result = await task;
         sw.Stop();
 
         ConsoleWriter.Important($"[{label}] Completed in {Format(sw.Elapsed)}");

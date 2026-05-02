@@ -26,7 +26,7 @@ class Program
 
         try
         {
-            List<string> failedUrls = await ((Func<Task<List<string>>>)(() => DownloadAll(videoLinks, _cts.Token))).TimeAsync("Total time");
+            List<string> failedUrls = await TimingExtensions.TimeAsync(DownloadAll(videoLinks, _cts.Token), "Total time");
 
             if (failedUrls.Count != 0)
             {
@@ -45,6 +45,7 @@ class Program
         catch (Exception ex)
         {
             ConsoleWriter.Error("[Error] An exception occurred: " + ex.Message);
+            Environment.Exit(1);
         }
     }
 
@@ -58,7 +59,7 @@ class Program
 
             ConsoleWriter.Important($"[Processing URL] {link} ({i + 1}/{videoLinks.Length})");
 
-            var success = await ((Func<Task<bool>>)(() => DownloadVideo(link, ct))).TimeAsync("Video download");
+            var success = await TimingExtensions.TimeAsync(DownloadVideo(link, ct), "Video download");
 
             if (success)
             {
@@ -91,9 +92,9 @@ class Program
         }
 
         string[] urls = [.. File.ReadAllLines(_config.InputFile)
-        .Select(line => line.Trim())
-        .Where(line => line.StartsWith("http://") || line.StartsWith("https://"))
-        .Distinct(StringComparer.OrdinalIgnoreCase)];
+            .Select(line => line.Trim())
+            .Where(line => line.StartsWith("http://") || line.StartsWith("https://"))
+            .Distinct(StringComparer.OrdinalIgnoreCase)];
 
         if (urls.Length == 0)
         {
