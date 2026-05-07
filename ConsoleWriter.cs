@@ -15,9 +15,15 @@ public static class ConsoleWriter
     {
         lock (_colorLock)
         {
-            Console.ForegroundColor = color;
-            Console.WriteLine(msg);
-            Console.ResetColor();
+            try
+            {
+                Console.ForegroundColor = color;
+                Console.WriteLine(msg);
+            }
+            finally
+            {
+                Console.ResetColor();
+            }
         }
     }
 }
