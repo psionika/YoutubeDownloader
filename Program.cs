@@ -30,6 +30,7 @@ class Program
 
             if (failedUrls.Count != 0)
             {
+                ConsoleWriter.Info($"[Logging] Saving {failedUrls.Count} failed URLs to {_config.ErrorLogFile}...");
                 File.AppendAllLines(_config.ErrorLogFile, failedUrls);
                 ConsoleWriter.Error($"[Error] Completed with errors ({failedUrls.Count}/{videoLinks.Length}). List of failed links saved to: {_config.ErrorLogFile}");
             }
@@ -141,7 +142,16 @@ class Program
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
 
-            await process.WaitForExitAsync(ct);
+            try
+            {
+                await process.WaitForExitAsync(ct);
+            }
+            catch (OperationCanceledException)
+            {
+                process.Kill();
+                throw;
+            }
+
 
             return process.ExitCode == 0;
         }

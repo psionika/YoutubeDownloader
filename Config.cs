@@ -31,7 +31,7 @@ public class Config
 
         // 1) Check that required fields are set
         var missing = fileProps
-            .Where(p => string.IsNullOrEmpty((string)p.GetValue(config)!))
+            .Where(p => string.IsNullOrEmpty(p.GetValue(config)?.ToString()))
             .Select(p => p.Name)
             .ToList();
 
@@ -44,8 +44,8 @@ public class Config
 
         // 2) Check that files exist
         var missingFiles = fileProps
-            .Where(p => !File.Exists((string)p.GetValue(config)!))
-            .Select(p => $"{p.Name}: {(string)p.GetValue(config)!}")
+            .Where(p => !File.Exists(p.GetValue(config)?.ToString() ?? string.Empty))
+            .Select(p => $"{p.Name}: {p.GetValue(config)}")
             .ToList();
 
         if (missingFiles.Count > 0)
